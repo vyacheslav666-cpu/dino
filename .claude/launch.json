@@ -2,15 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dino-neat",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "C:\\Projects\\dino"],
-      "port": 8765
-    },
-    {
       "name": "dino-rl",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8766", "--bind", "127.0.0.1", "--directory", "C:\\Projects\\dino"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8766",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "C:\\Projects\\dino"
+      ],
       "port": 8766
     }
   ]
