@@ -1,0 +1,116 @@
+{
+ "source": "rl/runs/run1/last.pt",
+ "layers": [
+  {
+   "name": "conv.0.weight",
+   "shape": [
+    6,
+    6,
+    4,
+    32
+   ],
+   "offset": 0
+  },
+  {
+   "name": "conv.0.bias",
+   "shape": [
+    32
+   ],
+   "offset": 4608
+  },
+  {
+   "name": "conv.2.weight",
+   "shape": [
+    4,
+    4,
+    32,
+    64
+   ],
+   "offset": 4640
+  },
+  {
+   "name": "conv.2.bias",
+   "shape": [
+    64
+   ],
+   "offset": 37408
+  },
+  {
+   "name": "conv.4.weight",
+   "shape": [
+    3,
+    3,
+    64,
+    64
+   ],
+   "offset": 37472
+  },
+  {
+   "name": "conv.4.bias",
+   "shape": [
+    64
+   ],
+   "offset": 74336
+  },
+  {
+   "name": "value.0.weight",
+   "shape": [
+    4032,
+    256
+   ],
+   "offset": 74400
+  },
+  {
+   "name": "value.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 1106592
+  },
+  {
+   "name": "value.2.weight",
+   "shape": [
+    256,
+    1
+   ],
+   "offset": 1106848
+  },
+  {
+   "name": "value.2.bias",
+   "shape": [
+    1
+   ],
+   "offset": 1107104
+  },
+  {
+   "name": "advantage.0.weight",
+   "shape": [
+    4032,
+    256
+   ],
+   "offset": 1107105
+  },
+  {
+   "name": "advantage.0.bias",
+   "shape": [
+    256
+   ],
+   "offset": 2139297
+  },
+  {
+   "name": "advantage.2.weight",
+   "shape": [
+    256,
+    3
+   ],
+   "offset": 2139553
+  },
+  {
+   "name": "advantage.2.bias",
+   "shape": [
+    3
+   ],
+   "offset": 2140321
+  }
+ ]
+}

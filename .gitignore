@@ -1,2 +1,5 @@
 .claude/settings.local.json
 __pycache__/
+.venv/
+rl/node_modules/
+rl/runs/

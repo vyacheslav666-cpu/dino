@@ -1,0 +1,8 @@
+{
+  "name": "dino-rl-env",
+  "private": true,
+  "description": "Headless pixel environment for the Chromium T-Rex game",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.65"
+  }
+}
