@@ -82,6 +82,11 @@
     .q .chosen .fill { background: var(--accent); }
     .q .val { font-variant-numeric: tabular-nums; text-align: right; font-size: 12px; }
     .q .chosen { font-weight: 600; }
+    .brain { margin-top: 12px; }
+    .brain-scroll { overflow-x: auto; }
+    #brain { display: block; width: 100%; min-width: 640px; height: auto; aspect-ratio: 1000 / 320; image-rendering: pixelated; }
+    .legend-pos { color: var(--accent); font-weight: 600; }
+    .legend-neg { color: #e0703a; font-weight: 600; }
     #runs { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; margin-top: 8px; overflow-wrap: anywhere; }
     #status { color: var(--muted); }
     #offline-resources { display: none; }
@@ -125,6 +130,12 @@
         <div id="runs"></div>
       </div>
     </div>
+
+    <div class="panel brain">
+      <h2>Мозг динозавра</h2>
+      <div class="brain-scroll"><canvas id="brain"></canvas></div>
+      <p>Каждый прямоугольник в свёртках — один фильтр: где на картинке он нашёл свой признак (край кактуса, птицу, землю). Ярче — сильнее. Дальше два слоя по 256 нейронов: один оценивает, насколько хорошо положение в целом (V), другой — чем каждое действие лучше остальных (A). Линии — 10 самых сильных вкладов в каждый выход: <span class="legend-pos">синие</span> повышают оценку, <span class="legend-neg">оранжевые</span> понижают.</p>
+    </div>
   </main>
 
   <div id="offline-resources">
@@ -133,6 +144,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <script src="../game.js"></script>
+  <script src="brain.js"></script>
   <script src="viewer.js"></script>
 </body>
 </html>

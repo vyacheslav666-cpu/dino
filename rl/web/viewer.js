@@ -50,20 +50,29 @@
   }
 
   // То же, что QNet.forward в rl/model.py. Вход — стопка кадров [4, H, W].
+  // Если передан acts, туда же кладутся активации слоёв для схемы мозга.
   function makeForward(w) {
     const convs = [[0, 3], [2, 2], [4, 1]]; // индекс слоя в nn.Sequential, шаг
-    return function (stack) {
+    return function (stack, acts) {
       return tf.tidy(() => {
         let h = tf.tensor(stack, [OBS.stack, OBS.height, OBS.width], 'float32').transpose([1, 2, 0]).expandDims(0).div(255);
-        for (const [i, stride] of convs) {
+        convs.forEach(([i, stride], k) => {
           h = tf.relu(tf.conv2d(h, w[`conv.${i}.weight`], stride, 'valid').add(w[`conv.${i}.bias`]));
-        }
+          if (acts) acts['c' + (k + 1)] = h.dataSync();
+        });
         // PyTorch раскладывает признаки как [каналы, высота, ширина].
         const f = h.transpose([0, 3, 1, 2]).reshape([1, -1]);
-        const head = (name) => tf.relu(f.matMul(w[`${name}.0.weight`]).add(w[`${name}.0.bias`]))
-          .matMul(w[`${name}.2.weight`]).add(w[`${name}.2.bias`]);
-        const v = head('value');
-        const a = head('advantage');
+        const hidden = (name) => tf.relu(f.matMul(w[`${name}.0.weight`]).add(w[`${name}.0.bias`]));
+        const hv = hidden('value');
+        const ha = hidden('advantage');
+        const v = hv.matMul(w['value.2.weight']).add(w['value.2.bias']);
+        const a = ha.matMul(w['advantage.2.weight']).add(w['advantage.2.bias']);
+        if (acts) {
+          acts.input = stack.slice();
+          acts.hv = hv.dataSync();
+          acts.ha = ha.dataSync();
+          acts.v = v.dataSync()[0];
+        }
         return v.add(a).sub(a.mean(1, true)).dataSync();
       });
     };
@@ -107,11 +116,15 @@
     return { label, track, fill, val };
   });
 
-  let lib, game, forward;
+  let lib, game, forward, brain;
   try {
     lib = await loadGame();
     const model = await loadModel();
     forward = makeForward(model.w);
+    brain = DinoBrain.create(document.getElementById('brain'), {
+      value: model.w['value.2.weight'].dataSync(),
+      advantage: model.w['advantage.2.weight'].dataSync(),
+    });
     ui.status.textContent = 'Веса: ' + model.source + '.';
   } catch (err) {
     console.error(err);
@@ -129,6 +142,8 @@
   let crashPause = 0;
   let best = 0;
   const history = [];
+  let acts = {};
+  let brainDirty = true;
 
   function newRun() {
     game.reset();
@@ -137,9 +152,14 @@
     q = [0, 0, 0];
   }
 
-  function decide() {
+  // Активации читаются из видеокарты только для хода, который попадёт на экран.
+  function decide(show) {
     const t0 = performance.now();
-    q = Array.from(forward(stack));
+    if (show) {
+      acts = {};
+      brainDirty = true;
+    }
+    q = Array.from(forward(stack, show ? acts : null));
     inferMs = inferMs * 0.9 + (performance.now() - t0) * 0.1;
     action = q.indexOf(Math.max(...q));
     const crashed = game.step(action);
@@ -195,6 +215,11 @@
     ui.speed.textContent = game.speed.toFixed(1);
     ui.ms.textContent = inferMs ? inferMs.toFixed(1) + ' мс' : '—';
     ui.history.textContent = history.length ? 'Последние забеги: ' + history.join(', ') : '';
+
+    if (brainDirty) {
+      brain.draw(acts, q, action, ACTION_NAMES);
+      brainDirty = false;
+    }
   }
 
   let backlog = 0;
@@ -211,7 +236,7 @@
         // Если сеть не успевает, игра замедляется, а не пропускает решения.
         for (let n = 0; backlog >= DECISION_MS && n < 12; n++) {
           backlog -= DECISION_MS;
-          if (decide()) {
+          if (decide(backlog < DECISION_MS)) {
             finishRun();
             backlog = 0;
             break;
@@ -230,6 +255,7 @@
       document.querySelectorAll('[data-speed]').forEach((x) => x.setAttribute('aria-pressed', x === b));
     });
   });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { brainDirty = true; });
   ui.pause.addEventListener('click', () => {
     paused = !paused;
     ui.pause.textContent = paused ? 'Продолжить' : 'Пауза';
