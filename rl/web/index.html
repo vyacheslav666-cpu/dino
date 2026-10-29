@@ -33,8 +33,6 @@
       font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     main { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; }
-    h1 { font-size: 20px; margin: 0 0 4px; }
-    .lead { color: var(--muted); margin: 0 0 16px; }
     #game {
       background: #f7f7f7;
       border: 1px solid var(--line);
@@ -67,35 +65,21 @@
     .group button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
     .group button:last-child { border-right: 0; }
     .group button[aria-pressed="true"] { background: var(--accent); color: #fff; }
-    .panels { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; }
-    @media (max-width: 720px) { .panels { grid-template-columns: 1fr; } }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
     .panel h2 { font-size: 14px; margin: 0 0 8px; }
     .panel p { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
-    .frames { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .frames figure { margin: 0; }
-    .frames canvas { display: block; width: 100%; aspect-ratio: 150 / 40; image-rendering: pixelated; border-radius: 4px; }
-    .frames figcaption { color: var(--muted); font-size: 11px; }
-    .q { display: grid; grid-template-columns: 70px 1fr 52px; gap: 6px 8px; align-items: center; }
-    .q .track { height: 14px; background: var(--line); border-radius: 3px; overflow: hidden; }
-    .q .fill { height: 100%; width: 0; background: var(--bar); }
-    .q .chosen .fill { background: var(--accent); }
-    .q .val { font-variant-numeric: tabular-nums; text-align: right; font-size: 12px; }
-    .q .chosen { font-weight: 600; }
-    .brain { margin-top: 12px; }
     .brain-scroll { overflow-x: auto; }
     #brain { display: block; width: 100%; min-width: 640px; height: auto; aspect-ratio: 1000 / 320; image-rendering: pixelated; }
     .legend-pos { color: var(--accent); font-weight: 600; }
     .legend-neg { color: #e0703a; font-weight: 600; }
-    #runs { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; margin-top: 8px; overflow-wrap: anywhere; }
-    #status { color: var(--muted); }
+    #status { color: var(--muted); margin: 0 0 12px; }
+    #status:empty { display: none; }
     #offline-resources { display: none; }
   </style>
 </head>
 <body>
   <main>
-    <h1>Динозавр учится на пикселях: DQN</h1>
-    <p class="lead">Сеть не знает ни координат кактусов, ни скорости. Она видит только картинку — четыре последних кадра 150×40 — и выбирает, какую клавишу держать. <span id="status">Загрузка…</span></p>
+    <p id="status">Загрузка…</p>
 
     <div id="game"><canvas id="view"></canvas></div>
 
@@ -115,20 +99,6 @@
       </div>
       <button id="btn-pause">Пауза</button>
       <button id="btn-restart">Новый забег</button>
-    </div>
-
-    <div class="panels">
-      <div class="panel">
-        <h2>Что видит сеть</h2>
-        <div class="frames" id="frames"></div>
-        <p>Это весь вход сети: уменьшенная картинка игры, светлое на тёмном. По разнице между кадрами она понимает, куда и как быстро всё движется.</p>
-      </div>
-      <div class="panel">
-        <h2>Оценка действий</h2>
-        <div class="q" id="q"></div>
-        <p>Q — сколько награды сеть ждёт впереди, если сейчас держать эту клавишу. Выбирается действие с наибольшей оценкой. Перед смертью оценки падают.</p>
-        <div id="runs"></div>
-      </div>
     </div>
 
     <div class="panel brain">

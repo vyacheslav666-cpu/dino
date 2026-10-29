@@ -16,9 +16,6 @@
     runs: document.getElementById('stat-runs'),
     speed: document.getElementById('stat-speed'),
     ms: document.getElementById('stat-ms'),
-    q: document.getElementById('q'),
-    frames: document.getElementById('frames'),
-    history: document.getElementById('runs'),
     pause: document.getElementById('btn-pause'),
   };
 
@@ -90,32 +87,6 @@
   obsCanvas.height = 150;
   const obsCtx = setupObsContext(obsCanvas.getContext('2d', { willReadFrequently: true }));
 
-  const frameViews = ['3 хода назад', '2 хода назад', '1 ход назад', 'сейчас'].map((label) => {
-    const fig = document.createElement('figure');
-    const c = document.createElement('canvas');
-    c.width = OBS.width;
-    c.height = OBS.height;
-    const cap = document.createElement('figcaption');
-    cap.textContent = label;
-    fig.append(c, cap);
-    ui.frames.appendChild(fig);
-    return { ctx: c.getContext('2d'), img: new ImageData(OBS.width, OBS.height) };
-  });
-
-  const qRows = ACTION_NAMES.map((name) => {
-    const label = document.createElement('div');
-    label.textContent = name;
-    const track = document.createElement('div');
-    track.className = 'track';
-    const fill = document.createElement('div');
-    fill.className = 'fill';
-    track.appendChild(fill);
-    const val = document.createElement('div');
-    val.className = 'val';
-    ui.q.append(label, track, val);
-    return { label, track, fill, val };
-  });
-
   let lib, game, forward, brain;
   try {
     lib = await loadGame();
@@ -125,7 +96,7 @@
       value: model.w['value.2.weight'].dataSync(),
       advantage: model.w['advantage.2.weight'].dataSync(),
     });
-    ui.status.textContent = 'Веса: ' + model.source + '.';
+    ui.status.textContent = '';
   } catch (err) {
     console.error(err);
     ui.status.textContent = 'Нет весов сети. Обучите её (rl/train.py) и выгрузите (rl/export.py).';
@@ -141,7 +112,7 @@
   let paused = false;
   let crashPause = 0;
   let best = 0;
-  const history = [];
+  let runs = 0;
   let acts = {};
   let brainDirty = true;
 
@@ -171,8 +142,7 @@
   function finishRun() {
     const score = game.score();
     best = Math.max(best, score);
-    history.unshift(score);
-    if (history.length > 12) history.pop();
+    runs++;
     crashPause = 1200;
   }
 
@@ -189,32 +159,11 @@
       viewCtx.fillText('G A M E   O V E R', 300, 60);
     }
 
-    for (let k = 0; k < OBS.stack; k++) {
-      const { ctx, img } = frameViews[k];
-      for (let i = 0; i < FRAME; i++) {
-        const v = stack[k * FRAME + i];
-        img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
-        img.data[i * 4 + 3] = 255;
-      }
-      ctx.putImageData(img, 0, 0);
-    }
-
-    const lo = Math.min(...q, 0);
-    const hi = Math.max(...q, 1e-6);
-    qRows.forEach((row, i) => {
-      const chosen = i === action && !game.crashed;
-      row.label.className = chosen ? 'chosen' : '';
-      row.track.className = 'track' + (chosen ? ' chosen' : '');
-      row.fill.style.width = (100 * (q[i] - lo) / (hi - lo || 1)).toFixed(1) + '%';
-      row.val.textContent = q[i].toFixed(2);
-    });
-
     ui.score.textContent = String(game.score()).padStart(5, '0');
     ui.best.textContent = best ? String(best).padStart(5, '0') : '—';
-    ui.runs.textContent = history.length ? String(history.length) : '0';
+    ui.runs.textContent = String(runs);
     ui.speed.textContent = game.speed.toFixed(1);
     ui.ms.textContent = inferMs ? inferMs.toFixed(1) + ' мс' : '—';
-    ui.history.textContent = history.length ? 'Последние забеги: ' + history.join(', ') : '';
 
     if (brainDirty) {
       brain.draw(acts, q, action, ACTION_NAMES);
