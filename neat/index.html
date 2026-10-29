@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Динозавры и NEAT</title>
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --panel: #ffffff;
+      --ink: #1c1c1a;
+      --muted: #8a8a85;
+      --line: #e4e4e0;
+      --accent: #2f6fdb;
+      --pos: #1f8a5b;
+      --neg: #d0453a;
+      --series-1: #2f6fdb;
+      --series-2: #c8961e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161615;
+        --panel: #1f1f1d;
+        --ink: #ecece8;
+        --muted: #77776f;
+        --line: #33332f;
+        --accent: #6c9cf0;
+        --pos: #3fbf86;
+        --neg: #ef6b60;
+        --series-1: #6c9cf0;
+        --series-2: #e0b44a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .lead { color: var(--muted); margin: 0 0 16px; }
+    #game {
+      background: #f7f7f7;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 0;
+      overflow: hidden;
+    }
+    #game canvas { display: block; width: 100% !important; height: auto !important; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+    .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+    .group { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    button {
+      font: inherit;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--muted); }
+    .group button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
+    .group button:last-child { border-right: 0; }
+    .group button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    label { color: var(--muted); display: flex; gap: 6px; align-items: center; }
+    input[type=number] {
+      width: 80px;
+      font: inherit;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 5px 8px;
+    }
+    .panels { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; }
+    @media (max-width: 720px) { .panels { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+    .panel h2 { font-size: 14px; margin: 0 0 8px; }
+    .panel p { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+    canvas.plot { display: block; width: 100%; height: 260px; }
+    .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+    .legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+    #offline-resources { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Динозавры учатся сами: NEAT</h1>
+    <p class="lead">Каждым динозавром управляет своя маленькая нейросеть. Кто пробежал дальше, тот оставляет потомство. Яркий динозавр — чемпион прошлого поколения, бледные — остальные. <span id="mode"></span>.</p>
+
+    <div id="game"></div>
+
+    <div class="stats">
+      <div class="stat"><span>Поколение</span><b id="stat-gen">1</b></div>
+      <div class="stat"><span>Трасса</span><b id="stat-track">—</b></div>
+      <div class="stat"><span>Живых</span><b id="stat-alive">—</b></div>
+      <div class="stat"><span>Видов</span><b id="stat-species">—</b></div>
+      <div class="stat"><span>Счёт</span><b id="stat-score">0</b></div>
+      <div class="stat"><span>Лучший в среднем</span><b id="stat-record">—</b></div>
+    </div>
+
+    <div class="controls">
+      <div class="group" role="group" aria-label="Скорость">
+        <button data-speed="1" aria-pressed="true">1×</button>
+        <button data-speed="3" aria-pressed="false">3×</button>
+        <button data-speed="10" aria-pressed="false">10×</button>
+        <button data-speed="max" aria-pressed="false">Макс</button>
+      </div>
+      <button id="btn-pause">Пауза</button>
+      <button id="btn-skip">Следующее поколение</button>
+      <button id="btn-champion">Показать лучшего</button>
+      <button id="btn-reset">Начать заново</button>
+      <label>Динозавров <input id="pop-size" type="number" min="10" max="500" value="150"></label>
+      <label>Трасс на поколение <input id="tracks" type="number" min="1" max="10" value="3"></label>
+      <label>Предел очков <input id="score-cap" type="number" min="0" step="1000" value="20000"></label>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <h2>Мозг ведущего динозавра</h2>
+        <canvas id="net" class="plot"></canvas>
+        <p id="net-caption"></p>
+        <p>Зелёные связи усиливают сигнал, красные — гасят. Чем ярче линия, тем сильнее сигнал сейчас. Кружок заполнен, когда нейрон активен.</p>
+      </div>
+      <div class="panel">
+        <h2>Средние очки по поколениям</h2>
+        <div class="legend"><span><i style="background:var(--series-1)"></i>лучший</span><span><i style="background:var(--series-2)"></i>в среднем</span></div>
+        <canvas id="chart" class="plot"></canvas>
+        <p>Каждая сеть проходит несколько трасс, её оценка — средний результат по ним. Трасса заканчивается, когда кто-то набрал предел очков, чтобы эволюция не стояла. 0 — без предела.</p>
+      </div>
+    </div>
+  </main>
+
+  <div id="offline-resources">
+    <img id="offline-resources-1x" src="../t-rex-runner/assets/default_100_percent/100-offline-sprite.png" alt="">
+    <img id="offline-resources-2x" src="../t-rex-runner/assets/default_200_percent/200-offline-sprite.png" alt="">
+  </div>
+
+  <script src="neat.js"></script>
+  <script src="trainer.js"></script>
+</body>
+</html>
