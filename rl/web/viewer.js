@@ -11,7 +11,6 @@
 
   const ui = {
     status: document.getElementById('status'),
-    pause: document.getElementById('btn-pause'),
   };
 
   async function loadGame() {
@@ -103,7 +102,6 @@
   let q = [0, 0, 0];
   let action = 0;
   let inferMs = 0;
-  let speed = 1;
   let paused = false;
   let crashPause = 0;
   let best = 0;
@@ -167,7 +165,7 @@
     drawDigits(score, x, 5);
 
     viewCtx.fillStyle = '#535353';
-    viewCtx.font = '8px "Press Start 2P", monospace';
+    viewCtx.font = '10px "Press Start 2P", monospace';
     viewCtx.textAlign = 'left';
     viewCtx.textBaseline = 'top';
     const parts = [
@@ -176,6 +174,10 @@
       'СЕТЬ ' + (inferMs ? inferMs.toFixed(0) + ' МС' : '—'),
     ];
     viewCtx.fillText(parts.join('   '), 8, 8);
+    if (paused) {
+      viewCtx.textAlign = 'center';
+      viewCtx.fillText('ПАУЗА', 300, 60);
+    }
     viewCtx.textBaseline = 'alphabetic';
   }
 
@@ -209,7 +211,7 @@
         crashPause -= elapsed;
         if (crashPause <= 0) newRun();
       } else {
-        backlog += elapsed * speed;
+        backlog += elapsed;
         // Если сеть не успевает, игра замедляется, а не пропускает решения.
         for (let n = 0; backlog >= DECISION_MS && n < 12; n++) {
           backlog -= DECISION_MS;
@@ -226,20 +228,12 @@
     requestAnimationFrame(tick);
   }
 
-  document.querySelectorAll('[data-speed]').forEach((b) => {
-    b.addEventListener('click', () => {
-      speed = Number(b.dataset.speed);
-      document.querySelectorAll('[data-speed]').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    });
-  });
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { brainDirty = true; });
-  ui.pause.addEventListener('click', () => {
+  // Пробел — пауза, чтобы разглядеть схему мозга на одном ходу.
+  document.addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' || e.repeat) return;
+    e.preventDefault();
     paused = !paused;
-    ui.pause.textContent = paused ? 'Продолжить' : 'Пауза';
-  });
-  document.getElementById('btn-restart').addEventListener('click', () => {
-    crashPause = 0;
-    newRun();
   });
 
   // Для отладки из консоли: сверка с PyTorch на той же стопке кадров.

@@ -6,7 +6,7 @@ window.DinoBrain = (function () {
   'use strict';
 
   const W = 1000;
-  const H = 320;
+  const H = 330;
   const TOP = 12;
   const AREA = 250; // высота области со слоями, ниже подписи
   const GAP = 42;   // между колонками
@@ -35,7 +35,7 @@ window.DinoBrain = (function () {
     { key: 'c2', n: 64, h: 5, w: 23, scale: 2, cols: 4, gap: 3, name: 'Свёртка 2', dims: '64 карты 5×23' },
     { key: 'c3', n: 64, h: 3, w: 21, scale: 2, cols: 4, gap: 3, name: 'Свёртка 3', dims: '64 карты 3×21' },
   ];
-  const DENSE = { side: 16, cell: 5, pitch: 6, caption: 14, between: 20 };
+  const DENSE = { side: 16, cell: 5, pitch: 6, caption: 17, between: 16 };
   const OUT_W = 120;
 
   function layout() {
@@ -206,7 +206,7 @@ window.DinoBrain = (function () {
         drawMaps(L, has);
       }
 
-      ctx.font = '11px system-ui, sans-serif';
+      ctx.font = '13px system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillStyle = col.muted;
       for (const g of [dense.v, dense.a]) ctx.fillText(g.caption, dense.x, g.y - 4);
@@ -246,13 +246,13 @@ window.DinoBrain = (function () {
 
       node(out.x, out.v, 8, col.panel, col.muted);
       ctx.fillStyle = col.ink;
-      ctx.font = '12px system-ui, sans-serif';
+      ctx.font = '15px system-ui, sans-serif';
       ctx.fillText('V ' + (has ? acts.v.toFixed(2) : '—'), out.x + 14, out.v + 4);
       names.forEach((name, i) => {
         const chosen = has && i === action;
         node(out.x, out.a[i], 8, chosen ? col.pos : col.panel, chosen ? col.pos : col.muted);
         ctx.fillStyle = chosen ? col.ink : col.muted;
-        ctx.font = (chosen ? '600 ' : '') + '12px system-ui, sans-serif';
+        ctx.font = (chosen ? '600 ' : '') + '15px system-ui, sans-serif';
         ctx.fillText(name + ' ' + (has ? q[i].toFixed(2) : ''), out.x + 14, out.a[i] + 4);
       });
 
@@ -265,11 +265,11 @@ window.DinoBrain = (function () {
       ctx.textAlign = 'center';
       for (const [x, name, dims] of labels) {
         ctx.fillStyle = col.ink;
-        ctx.font = '600 12px system-ui, sans-serif';
-        ctx.fillText(name, x, TOP + AREA + 26);
+        ctx.font = '600 15px system-ui, sans-serif';
+        ctx.fillText(name, x, TOP + AREA + 28);
         ctx.fillStyle = col.muted;
-        ctx.font = '11px system-ui, sans-serif';
-        ctx.fillText(dims, x, TOP + AREA + 42);
+        ctx.font = '13px system-ui, sans-serif';
+        ctx.fillText(dims, x, TOP + AREA + 47);
       }
     }
 

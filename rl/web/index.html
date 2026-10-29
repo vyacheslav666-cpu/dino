@@ -34,7 +34,7 @@
       font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     /* Ширина подобрана так, чтобы игра и схема целиком помещались по высоте окна. */
-    main { max-width: clamp(720px, calc((100vh - 210px) * 1.75), 1280px); margin: 0 auto; padding: 16px 16px 16px; }
+    main { max-width: clamp(720px, calc((100vh - 140px) * 1.7), 1280px); margin: 0 auto; padding: 16px 16px 16px; }
     #game {
       background: #f7f7f7;
       border: 1px solid var(--line);
@@ -43,26 +43,29 @@
       overflow: hidden;
     }
     #game canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 1; image-rendering: pixelated; }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
-    .group { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-    button {
-      font: inherit;
-      color: var(--ink);
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-    button:hover { border-color: var(--muted); }
-    .group button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
-    .group button:last-child { border-right: 0; }
-    .group button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    .brain { margin-top: 12px; }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
-    .panel h2 { font-size: 14px; margin: 0 0 8px; }
-    .panel p { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+    .panel h2 { font-size: 16px; margin: 0 0 8px; }
+    .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .head h2 { margin: 0; }
+    .info {
+      width: 22px; height: 22px; padding: 0;
+      border: 1px solid var(--muted); border-radius: 50%;
+      background: none; color: var(--muted);
+      font: italic 600 13px/20px Georgia, serif; cursor: pointer;
+    }
+    .info:hover { color: var(--ink); border-color: var(--ink); }
+    #brain-info {
+      max-width: min(520px, calc(100vw - 32px));
+      padding: 14px 16px;
+      border: 1px solid var(--line); border-radius: 8px;
+      background: var(--panel); color: var(--ink);
+      font-size: 14px; line-height: 1.5;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+    #brain-info::backdrop { background: rgba(0, 0, 0, 0.2); }
     .brain-scroll { overflow-x: auto; }
-    #brain { display: block; width: 100%; min-width: 640px; height: auto; aspect-ratio: 1000 / 320; image-rendering: pixelated; }
+    #brain { display: block; width: 100%; min-width: 640px; height: auto; aspect-ratio: 1000 / 330; image-rendering: pixelated; }
     .legend-pos { color: var(--accent); font-weight: 600; }
     .legend-neg { color: #e0703a; font-weight: 600; }
     #status { color: var(--muted); margin: 0 0 12px; }
@@ -76,20 +79,13 @@
 
     <div id="game"><canvas id="view"></canvas></div>
 
-    <div class="controls">
-      <div class="group" role="group" aria-label="Скорость">
-        <button data-speed="1" aria-pressed="true">1×</button>
-        <button data-speed="3" aria-pressed="false">3×</button>
-        <button data-speed="10" aria-pressed="false">10×</button>
-      </div>
-      <button id="btn-pause">Пауза</button>
-      <button id="btn-restart">Новый забег</button>
-    </div>
-
     <div class="panel brain">
-      <h2>Мозг динозавра</h2>
+      <div class="head">
+        <h2>Мозг динозавра</h2>
+        <button class="info" popovertarget="brain-info" aria-label="Что на схеме">i</button>
+      </div>
+      <div id="brain-info" popover>Каждый прямоугольник в свёртках — один фильтр: где на картинке он нашёл свой признак (край кактуса, птицу, землю). Ярче — сильнее. Дальше два слоя по 256 нейронов: один оценивает, насколько хорошо положение в целом (V), другой — чем каждое действие лучше остальных (A). Линии — 10 самых сильных вкладов в каждый выход: <span class="legend-pos">синие</span> повышают оценку, <span class="legend-neg">оранжевые</span> понижают. Пробел — пауза.</div>
       <div class="brain-scroll"><canvas id="brain"></canvas></div>
-      <p>Каждый прямоугольник в свёртках — один фильтр: где на картинке он нашёл свой признак (край кактуса, птицу, землю). Ярче — сильнее. Дальше два слоя по 256 нейронов: один оценивает, насколько хорошо положение в целом (V), другой — чем каждое действие лучше остальных (A). Линии — 10 самых сильных вкладов в каждый выход: <span class="legend-pos">синие</span> повышают оценку, <span class="legend-neg">оранжевые</span> понижают.</p>
     </div>
   </main>
 
