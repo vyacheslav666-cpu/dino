@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Динозавр и DQN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #fafaf9;
@@ -12,7 +15,6 @@
       --muted: #8a8a85;
       --line: #e4e4e0;
       --accent: #2f6fdb;
-      --bar: #c9c9c3;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -22,7 +24,6 @@
         --muted: #77776f;
         --line: #33332f;
         --accent: #6c9cf0;
-        --bar: #4a4a45;
       }
     }
     * { box-sizing: border-box; }
@@ -32,7 +33,8 @@
       color: var(--ink);
       font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
     }
-    main { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; }
+    /* Ширина подобрана так, чтобы игра и схема целиком помещались по высоте окна. */
+    main { max-width: clamp(720px, calc((100vh - 210px) * 1.75), 1280px); margin: 0 auto; padding: 16px 16px 16px; }
     #game {
       background: #f7f7f7;
       border: 1px solid var(--line);
@@ -41,16 +43,7 @@
       overflow: hidden;
     }
     #game canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 1; image-rendering: pixelated; }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 8px;
-      margin: 12px 0;
-    }
-    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
-    .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
-    .stat span { color: var(--muted); font-size: 12px; }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
     .group { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
     button {
       font: inherit;
@@ -82,14 +75,6 @@
     <p id="status">Загрузка…</p>
 
     <div id="game"><canvas id="view"></canvas></div>
-
-    <div class="stats">
-      <div class="stat"><span>Счёт</span><b id="stat-score">0</b></div>
-      <div class="stat"><span>Рекорд</span><b id="stat-best">—</b></div>
-      <div class="stat"><span>Забегов</span><b id="stat-runs">0</b></div>
-      <div class="stat"><span>Скорость игры</span><b id="stat-speed">—</b></div>
-      <div class="stat"><span>Время сети на ход</span><b id="stat-ms">—</b></div>
-    </div>
 
     <div class="controls">
       <div class="group" role="group" aria-label="Скорость">

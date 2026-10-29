@@ -11,11 +11,6 @@
 
   const ui = {
     status: document.getElementById('status'),
-    score: document.getElementById('stat-score'),
-    best: document.getElementById('stat-best'),
-    runs: document.getElementById('stat-runs'),
-    speed: document.getElementById('stat-speed'),
-    ms: document.getElementById('stat-ms'),
     pause: document.getElementById('btn-pause'),
   };
 
@@ -146,6 +141,44 @@
     crashPause = 1200;
   }
 
+  // Табло поверх игры, только на экране: сеть получает кадры с отдельного
+  // холста и его не видит. Очки — цифрами из спрайта игры, как в оригинале.
+  const DIGIT = { w: 10, h: 13, step: 11 };
+  function drawDigits(text, x, y) {
+    const sprite = window.Runner.imageSprite;
+    const base = lib.spriteDef.TEXT_SPRITE;
+    for (const ch of text) {
+      // В спрайте после цифр 0–9 идут буквы H и I.
+      const i = ch === 'H' ? 10 : ch === 'I' ? 11 : ch === ' ' ? -1 : Number(ch);
+      if (i >= 0) viewCtx.drawImage(sprite, base.x + i * DIGIT.w, base.y, DIGIT.w, DIGIT.h, x, y, DIGIT.w, DIGIT.h);
+      x += DIGIT.step;
+    }
+  }
+
+  function drawHud() {
+    const score = String(game.score()).padStart(5, '0');
+    const hi = 'HI ' + String(best).padStart(5, '0') + '  ';
+    const x = 600 - DIGIT.step * (score.length + 1);
+    if (best) {
+      viewCtx.globalAlpha = 0.8;
+      drawDigits(hi, x - DIGIT.step * hi.length, 5);
+      viewCtx.globalAlpha = 1;
+    }
+    drawDigits(score, x, 5);
+
+    viewCtx.fillStyle = '#535353';
+    viewCtx.font = '8px "Press Start 2P", monospace';
+    viewCtx.textAlign = 'left';
+    viewCtx.textBaseline = 'top';
+    const parts = [
+      'ЗАБЕГОВ ' + runs,
+      'СКОРОСТЬ ' + game.speed.toFixed(1),
+      'СЕТЬ ' + (inferMs ? inferMs.toFixed(0) + ' МС' : '—'),
+    ];
+    viewCtx.fillText(parts.join('   '), 8, 8);
+    viewCtx.textBaseline = 'alphabetic';
+  }
+
   function render() {
     viewCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     viewCtx.imageSmoothingEnabled = false;
@@ -158,12 +191,7 @@
       viewCtx.textAlign = 'center';
       viewCtx.fillText('G A M E   O V E R', 300, 60);
     }
-
-    ui.score.textContent = String(game.score()).padStart(5, '0');
-    ui.best.textContent = best ? String(best).padStart(5, '0') : '—';
-    ui.runs.textContent = String(runs);
-    ui.speed.textContent = game.speed.toFixed(1);
-    ui.ms.textContent = inferMs ? inferMs.toFixed(1) + ' мс' : '—';
+    drawHud();
 
     if (brainDirty) {
       brain.draw(acts, q, action, ACTION_NAMES);
@@ -217,7 +245,6 @@
   // Для отладки из консоли: сверка с PyTorch на той же стопке кадров.
   window.dinoViewer = { stack, forward, game };
 
-  ui.runs.textContent = '0';
   newRun();
   requestAnimationFrame(tick);
 })();
