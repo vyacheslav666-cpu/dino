@@ -3,7 +3,8 @@
 Что внутри: свёрточная сеть по 4 последним кадрам, Double DQN,
 dueling-головы, n-шаговые возвраты, буфер воспроизведения на сотни тысяч
 переходов прямо в видеопамяти, ε-жадное исследование.
-Награда: +0.1 за каждый шаг, −1 за смерть.
+Награда: +0.1 за каждый шаг, −1 за смерть и −press-cost за каждое новое
+нажатие клавиши (удержание не штрафуется).
 
     .venv/Scripts/python rl/train.py --name run1
 """
@@ -105,6 +106,8 @@ def main():
     p.add_argument("--learn-start", type=int, default=20_000)
     p.add_argument("--updates", type=int, default=2, help="шагов градиента на шаг всех партий")
     p.add_argument("--target-every", type=int, default=2000, help="шагов градиента между копиями целевой сети")
+    p.add_argument("--press-cost", type=float, default=0.0,
+                   help="штраф за новое нажатие пробела или «вниз», чтобы не жал клавиши без нужды")
     p.add_argument("--eps-end", type=float, default=0.01)
     p.add_argument("--eps-steps", type=int, default=500_000)
     p.add_argument("--train-cap", type=int, default=5000, help="обрезать учебную партию на стольких очках")
@@ -149,6 +152,7 @@ def main():
 
     obs = env.obs.copy()
     ep_pos = np.zeros(args.envs, np.int64)
+    prev_actions = np.zeros(args.envs, np.int64)
     recent = deque(maxlen=100)
     episodes, grad_steps = 0, 0
     stats = torch.zeros(2, device=device)  # сумма loss и Q с последнего отчёта
@@ -175,8 +179,11 @@ def main():
                     target.load_state_dict(net.state_dict())
         next_obs, done, trunc, score = env.step_wait()
 
-        replay.add(obs[:, -1], ep_pos, actions, np.where(done, -1.0, 0.1).astype(np.float32), done, trunc)
+        pressed = (actions != 0) & (actions != prev_actions)
+        rewards = np.where(done, -1.0, 0.1) - args.press_cost * pressed
+        replay.add(obs[:, -1], ep_pos, actions, rewards.astype(np.float32), done, trunc)
         ended = done | trunc
+        prev_actions = np.where(ended, 0, actions)
         ep_pos = np.where(ended, 0, ep_pos + 1)
         obs = next_obs.copy()
         env_steps += args.envs

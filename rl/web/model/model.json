@@ -1,5 +1,5 @@
 {
- "source": "rl/runs/run1/last.pt",
+ "source": "rl/runs/run2/best.pt",
  "layers": [
   {
    "name": "conv.0.weight",
